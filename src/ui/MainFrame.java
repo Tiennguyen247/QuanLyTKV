@@ -3,12 +3,15 @@ package ui;
 import service.QuanLyThietKeVien;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JFrame;
@@ -85,7 +88,6 @@ public class MainFrame extends JFrame {
         btnLamMoi = new JButton("Lam Moi");
         btnSapXep = new JButton("Sap Xep");
         btnTimKiem = new JButton("Tim Kiem");
-
         
         pnlButtons.add(btnThem);
         pnlButtons.add(btnSua);
@@ -94,7 +96,7 @@ public class MainFrame extends JFrame {
         pnlButtons.add(btnSapXep);
         pnlButtons.add(new JLabel("Tim theo ten:"));
         pnlButtons.add(txtTimKiem);
-        pnlButtons.add(txtTimKiem);
+        pnlButtons.add(btnTimKiem);
 
         pnlCenter.add(pnlButtons, BorderLayout.NORTH);
 
@@ -109,6 +111,7 @@ public class MainFrame extends JFrame {
 
         quanLyTKV.docFile(FILE_NAME);
         loadTable(quanLyTKV.getDanhSachTKV());
+        initEvents();
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -119,6 +122,124 @@ public class MainFrame extends JFrame {
             });
         }
 
+        private ThietKeVien getFormTKV() {
+            String maTKV = txtMaTKV.getText().trim();
+            String hoTen = txtHoTen.getText().trim();
+            String ngaySinh = txtNgaySinh.getText().trim();
+            String soDT = txtSoDT.getText().trim();
+            String chuyenNganh = txtChuyenNganh.getText().trim();
+            String phanMemChinh = txtPhanMemChinh.getText().trim();
+            int soNamKN;
+            double luongCoBan;
+
+            if (maTKV.isEmpty() || hoTen.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui long nhap Ma TKV va Ho ten!");
+                return null;
+            }
+                try {
+                    soNamKN = Integer.parseInt(txtSoNamKN.getText().trim());
+
+                    if (soNamKN < 0) {
+                        JOptionPane.showMessageDialog(this, "Loi: So nam kinh nghiem phai lon hon hoac bang 0!");
+                        return null;
+                    }
+
+                    luongCoBan = Double.parseDouble(txtLuongCoBan.getText().trim());
+
+                    if (luongCoBan <= 0) {
+                        JOptionPane.showMessageDialog(this, "Loi: Luong co ban phai lon hon 0!");
+                        return null;
+                    }
+                
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "So nam kinh nghiem va Luong co ban phai la so hop le!");
+                    return null;
+                }
+                return new ThietKeVien(maTKV, hoTen, ngaySinh, soDT, chuyenNganh, phanMemChinh, soNamKN, luongCoBan);
+            }
+
+
+        private void initEvents(){
+            table.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int row = table.getSelectedRow();
+                    if (row != -1) {
+                        txtMaTKV.setText(tableModel.getValueAt(row, 0).toString());
+                        txtHoTen.setText(tableModel.getValueAt(row, 1).toString());
+                        txtNgaySinh.setText(tableModel.getValueAt(row, 2).toString());
+                        txtSoDT.setText(tableModel.getValueAt(row, 3).toString());
+                        txtChuyenNganh.setText(tableModel.getValueAt(row, 4).toString());
+                        txtPhanMemChinh.setText(tableModel.getValueAt(row, 5).toString());
+                        txtSoNamKN.setText(tableModel.getValueAt(row, 6).toString());
+                        txtLuongCoBan.setText(tableModel.getValueAt(row, 7).toString());
+
+                        txtMaTKV.setEditable(false);
+                    }
+                }
+            });
+
+            btnThem.addActionListener(e -> {
+                ThietKeVien tkv = getFormTKV();
+                if (tkv != null) {
+                    if (quanLyTKV.themTKV(tkv)) {
+                        loadTable(quanLyTKV.getDanhSachTKV());
+                        clearForm();
+                        JOptionPane.showMessageDialog(this, "Them thanh cong!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Ma TKV da ton tai!");
+                    }
+                }
+            });
+
+            btnSua.addActionListener(e -> {
+                ThietKeVien tkv = getFormTKV();
+                if (tkv != null) {
+                    if (quanLyTKV.suaTKV(tkv.getMaTKV(),tkv)) {
+                        loadTable(quanLyTKV.getDanhSachTKV());
+                        clearForm();
+                        JOptionPane.showMessageDialog(this, "Cap nhat bang thanh cong!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Khong tim thay Ma TKV can sua!");
+                    }
+                }
+            });
+
+            btnXoa.addActionListener(e -> {
+                String maTKV = txtMaTKV.getText().trim();
+                if (maTKV.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui long nhap Ma TKV can xoa!");
+                    return;
+                }
+
+                int result = JOptionPane.showConfirmDialog(this, "Ban co chac muon xoa TKV nay?", "Xac nhan", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    if (quanLyTKV.xoaTKV(maTKV)) {
+                        loadTable(quanLyTKV.getDanhSachTKV());
+                        clearForm();
+                        JOptionPane.showMessageDialog(this, "Xoa thanh cong!");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Khong tim thay Ma TKV can xoa!");
+                    }
+                }
+            });
+
+            btnLamMoi.addActionListener(e -> {
+                clearForm();
+                loadTable(quanLyTKV.getDanhSachTKV());
+            });
+
+            btnSapXep.addActionListener(e -> {
+                quanLyTKV.sapXepTheoLuongGiamDan();
+                loadTable(quanLyTKV.getDanhSachTKV());
+            });
+
+            btnTimKiem.addActionListener(e -> {
+                String tuKhoa = txtTimKiem.getText().trim();
+                loadTable(quanLyTKV.timKiemTheoTen(tuKhoa));
+            });
+
+        }
         private void loadTable(ArrayList<ThietKeVien> danhSachTKV) {
             tableModel.setRowCount(0);
             for (ThietKeVien tkv : danhSachTKV) {
@@ -135,6 +256,20 @@ public class MainFrame extends JFrame {
                 };
                 tableModel.addRow(rowData);
             }
+            txtMaTKV.setEditable(true);
+        }
+    
+        private void clearForm() {
+            txtMaTKV.setText("");
+            txtHoTen.setText("");
+            txtNgaySinh.setText("");
+            txtSoDT.setText("");
+            txtChuyenNganh.setText("");
+            txtPhanMemChinh.setText("");
+            txtSoNamKN.setText("");
+            txtLuongCoBan.setText("");
+            txtTimKiem.setText("");
+            txtMaTKV.setEditable(true);
         }
 
         public static void main(String[] args) {
