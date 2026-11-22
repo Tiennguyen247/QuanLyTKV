@@ -1,0 +1,8 @@
+# Bo qua thu muc va tep bien dich Java
+bin/
+*.class
+*.jar
+
+# Bo qua cau hinh rieng cua VS Code va du lieu chay thu
+.vscode/
+thietkevien.txt
