@@ -80,7 +80,7 @@ public class ThietKeVien {
 
     @Override public String toString() {
         return "ThietKeVien{" +
-                "maTKV: " + maTKV + '\'' +
+                "'maTKV: " + maTKV + '\'' +
                 ", hoTen: " + hoTen + '\'' +
                 ", ngaySinh: " + ngaySinh + '\'' +
                 ", soDT: " + soDT + '\'' +
