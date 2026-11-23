@@ -5,6 +5,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import model.ThietKeVien;
 
@@ -132,5 +135,32 @@ public class QuanLyThietKeVien {
         } catch (NumberFormatException e) {
             System.err.println("Loi: " + e.getMessage());
         }      
+    }
+    public boolean xuatFileCSV(String tenFile, ArrayList<ThietKeVien> danhSach) {
+        try (BufferedWriter bw = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(tenFile), StandardCharsets.UTF_8))) {
+            bw.write('\uFEFF');
+            bw.write("Ma TKV,Ho Ten,Ngay Sinh,So DT,Chuyen Nganh,Phan Mem Chinh,So Nam KN,Luong Co Ban,Thuc Linh");
+            bw.newLine();
+
+            for (ThietKeVien tkv : danhSach) {
+                String line = String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%d,%.0f,%.0f",
+                        tkv.getMaTKV(),
+                        tkv.getHoTen(),
+                        tkv.getNgaySinh(),
+                        tkv.getSoDT(),
+                        tkv.getChuyenNganh(),
+                        tkv.getPhanMemChinh(),
+                        tkv.getSoNamKN(),
+                        tkv.getLuongCoBan(),
+                        tkv.tinhThuNhap());
+                bw.write(line);
+                bw.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            System.err.println("Loi khi xuat file CSV: " + e.getMessage());
+            return false;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package ui;
 
 import service.QuanLyThietKeVien;
+import java.io.File;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.MouseAdapter;
@@ -14,6 +15,8 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.UIManager;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -33,13 +36,18 @@ import java.util.ArrayList;
 
 public class MainFrame extends JFrame {
     private QuanLyThietKeVien quanLyTKV = new QuanLyThietKeVien();
+
+    private ArrayList<ThietKeVien> danhSachHienTai = new ArrayList<>();
+
     private final String FILE_NAME = "thietkevien.txt";
 
     private JTextField txtMaTKV, txtHoTen, txtNgaySinh, txtSoDT, txtChuyenNganh, txtPhanMemChinh, txtSoNamKN, txtLuongCoBan, txtTimKiem;
 
-    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnSapXep, btnTimKiem, btnAbout;
+    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnSapXep, btnTimKiem, btnAbout, btnXuatCSV;
 
     private JTable table;
+
+    private JLabel lblSummary;
 
     private DefaultTableModel tableModel;
 
@@ -96,6 +104,7 @@ public class MainFrame extends JFrame {
         btnLamMoi = new JButton("Lam Moi");
         btnSapXep = new JButton("Sap Xep");
         btnTimKiem = new JButton("Tim Kiem");
+        btnXuatCSV = new JButton("Xuat Excel");
 
         pnlButtons.add(btnThem);
         pnlButtons.add(btnSua);
@@ -105,6 +114,7 @@ public class MainFrame extends JFrame {
         pnlButtons.add(new JLabel("Tim theo ten:"));
         pnlButtons.add(txtTimKiem);
         pnlButtons.add(btnTimKiem);
+        pnlButtons.add(btnXuatCSV);
 
         pnlCenter.add(pnlButtons, BorderLayout.NORTH);
 
@@ -124,14 +134,23 @@ public class MainFrame extends JFrame {
 
         add(pnlCenter, BorderLayout.CENTER);
 
-        JPanel pnlFooter = new JPanel(new BorderLayout());
-        pnlFooter.setBorder(BorderFactory.createEmptyBorder(2, 10, 6, 10));
+        JPanel pnlFooter = new JPanel(new GridLayout(2, 1, 0, 4));
+        pnlFooter.setBorder(BorderFactory.createEmptyBorder(4, 10, 6, 10));
+        
+        lblSummary = new JLabel("Tong so TKV: 0  |  Tong quy luong thuc linh: 0 VND");
+        lblSummary.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblSummary.setForeground(new Color(25, 118, 210));
+
+        JPanel pnlAuthorRow = new JPanel(new BorderLayout());
         JLabel lblAuthor = new JLabel("Developed by Nguyen Manh Tien | github.com/Tiennguyen247/QuanLyTKV");
         lblAuthor.setForeground(new Color(90, 90, 90));
         btnAbout = new JButton("About");
 
-        pnlFooter.add(lblAuthor, BorderLayout.WEST);
-        pnlFooter.add(btnAbout, BorderLayout.EAST);
+        pnlAuthorRow.add(lblAuthor, BorderLayout.WEST);
+        pnlAuthorRow.add(btnAbout, BorderLayout.EAST);
+
+        pnlFooter.add(lblSummary);
+        pnlFooter.add(pnlAuthorRow);
         add(pnlFooter, BorderLayout.SOUTH);
 
         quanLyTKV.docFile(FILE_NAME);
@@ -293,10 +312,41 @@ public class MainFrame extends JFrame {
                     "About QuanLyTKV",
                     JOptionPane.INFORMATION_MESSAGE);
             });
+
+            txtTimKiem.addActionListener(e -> btnTimKiem.doClick());
+
+            btnXuatCSV.addActionListener(e -> {
+                if (danhSachHienTai.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Danh sach rong, khong co du lieu de xuat!");
+                    return;
+                }
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Luu bao cao danh sach Thiet Ke Vien");
+                fileChooser.setSelectedFile(new File("DanhSachThietKeVien.csv"));
+                fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files (*.csv)", "csv"));
+
+                int userSelection = fileChooser.showSaveDialog(this);
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = fileChooser.getSelectedFile();
+                    String path = fileToSave.getAbsolutePath();
+                    if (!path.toLowerCase().endsWith(".csv")) {
+                        path += ".csv";
+                    }
+                    if (quanLyTKV.xuatFileCSV(path, danhSachHienTai)) {
+                        JOptionPane.showMessageDialog(this, "Xuat bao cao Excel (.csv) thanh cong!\nDuong dan: " + path);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Xuat file that bai!");
+                    }
+                }
+            });
         }
         private void loadTable(ArrayList<ThietKeVien> danhSachTKV) {
+            this.danhSachHienTai = danhSachTKV;
             tableModel.setRowCount(0);
+            double tongQuyLuong = 0;
             for (ThietKeVien tkv : danhSachTKV) {
+                double thucLinh = tkv.tinhThuNhap();
+                tongQuyLuong += thucLinh;
                 Object[] rowData = {
                     tkv.getMaTKV(),
                     tkv.getHoTen(),
@@ -306,9 +356,13 @@ public class MainFrame extends JFrame {
                     tkv.getPhanMemChinh(),
                     tkv.getSoNamKN(),
                     String.format("%.0f", tkv.getLuongCoBan()),
-                    String.format("%.0f", tkv.tinhThuNhap())
+                    String.format("%.0f", thucLinh)
                 };
                 tableModel.addRow(rowData);
+            }
+            if (lblSummary != null) {
+                lblSummary.setText(String.format("Tong so TKV: %d  |  Tong quy luong thuc linh: %,.0f VND",
+                        danhSachTKV.size(), tongQuyLuong));
             }
             txtMaTKV.setEditable(true);
         }
