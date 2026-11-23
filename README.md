@@ -17,3 +17,23 @@
 1. **Biên dịch mã nguồn:**
    ```bash
    javac -d bin src/model/*.java src/service/*.java src/ui/*.java
+
+(1) Chạy ứng dụng giao diện:
+
+Bash
+java -cp bin ui.MainFrame
+
+(2)Đóng gói tệp thực thi .jar:
+
+Bash
+java -jar QuanLyTKV.jar
+
+---
+
+### Bước 4: Đẩy phiên bản hoàn chỉnh lên GitHub
+Kiểm tra lại tệp `.gitignore` của bạn đã có dòng `*.jar` (để không đẩy tệp nhị phân lên kho mã nguồn), sau đó chạy lệnh chốt dự án:
+
+```powershell
+git add .
+git commit -m "Hoan thanh Chang 4: Dong goi JAR va cap nhat README.md"
+git push
